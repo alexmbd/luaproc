@@ -3,9 +3,6 @@
 cmake/
 tools.bat
 
-!/external/lua/lib/
-!/external/raylib/lib/
-
 # Prerequisites
 *.d
 
@@ -37,8 +34,6 @@ tools.bat
 # Compiled Static libraries
 *.lai
 *.la
-*.a
-*.lib
 
 # Executables
 *.exe
