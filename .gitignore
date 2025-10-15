@@ -3,6 +3,9 @@
 cmake/
 tools.bat
 
+!/external/lua/lib/
+!/external/raylib/lib/
+
 # Prerequisites
 *.d
 
