@@ -5,10 +5,10 @@
 namespace LuaProc
 {
 struct Window;
+class LuaProc;
 
 // ENVIRONMENT
 // Not implemented:
-// cursor
 // displayDensity, delay
 // frameCount
 // noCursor, noSmooth
@@ -17,6 +17,7 @@ struct Window;
 // windowMoved, windowRatio, windowResized
 namespace Environment
 {
+void cursor(sol::variadic_args va, LuaProc& luaproc);
 int displayHeight(sol::variadic_args va);
 int displayWidth(sol::variadic_args va);
 bool focused(sol::variadic_args va);

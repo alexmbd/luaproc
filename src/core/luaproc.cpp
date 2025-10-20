@@ -3,6 +3,7 @@
 
 #include "raylib.h"
 
+#include <fstream>
 #include <print>
 
 namespace LuaProc
@@ -47,16 +48,19 @@ LuaProc::LuaProc()
     m_lua           = std::make_unique<sol::state>();
     sol::state &lua = *m_lua;
 
+    addScriptCode();
+
     // ---------- CALLBACKS ----------
+    m_currentState = State::Setup;
     setupOutput();
     setupEnvironment();
 
     // TEMP
-    sol::protected_function_result script = lua.safe_script_file("cmake/dist/main.lua");
-    sol::protected_function setup         = lua["Setup"];
+    sol::protected_function_result script = lua.safe_script(m_scriptCode);
+    sol::protected_function setup         = lua["setup"];
     if (!setup.valid())
     {
-        std::println("[LUAPROC ERROR] '{}' function not found", "Setup");
+        std::println("[LUAPROC ERROR] '{}' function not found", "setup");
         std::exit(-1);
     }
     setup();
@@ -65,6 +69,18 @@ LuaProc::LuaProc()
     SetTargetFPS(m_window.frameRate);
     SetConfigFlags(m_window.flags);
     InitWindow(m_window.width, m_window.height, m_window.title.c_str());
+
+    m_currentState                    = State::PostSetup;
+    script                            = lua.safe_script(m_scriptCode);
+    sol::protected_function postSetup = lua["__postSetup__"];
+    if (!postSetup.valid())
+    {
+        std::println("[LUAPROC ERROR] '{}' function not found", "__postSetup__");
+        std::exit(-1);
+    }
+    postSetup();
+
+    m_currentState = State::Draw;
 }
 
 LuaProc::~LuaProc() { CloseWindow(); }
@@ -85,6 +101,30 @@ void LuaProc::run()
     }
 }
 
+LuaProc::State LuaProc::state() const { return m_currentState; }
+
+void LuaProc::addToPostSetup(const std::string &code)
+{
+    // Insert code before the end of __postSetup__ (string "end" has length of 3 (+ 1))
+    m_scriptCode.insert(m_scriptCode.length() - 4, code);
+}
+
+void LuaProc::addScriptCode()
+{
+    const char *file = "cmake/dist/main.lua";
+    std::ifstream inputFile(file);
+    if (!inputFile.is_open())
+    {
+        std::println("[LUAPROC ERROR] '{}' file not found", file);
+        std::exit(-1);
+    }
+
+    // TODO: Check how slow is this
+    std::string tempString = "";
+    while (std::getline(inputFile, tempString)) { m_scriptCode += tempString + '\n'; }
+    m_scriptCode += "\nfunction __postSetup__()\nend\n";
+}
+
 void LuaProc::setupOutput()
 {
     sol::state &lua = *m_lua;
@@ -98,6 +138,19 @@ void LuaProc::setupEnvironment()
 {
     sol::state &lua        = *m_lua;
 
+    lua["DEFAULT"]         = Window::MouseCursor::DEFAULT;
+    lua["ARROW"]           = Window::MouseCursor::ARROW;
+    lua["IBEAM"]           = Window::MouseCursor::IBEAM;
+    lua["CROSSHAIR"]       = Window::MouseCursor::CROSSHAIR;
+    lua["POINTING_HAND"]   = Window::MouseCursor::POINTING_HAND;
+    lua["RESIZE_EW"]       = Window::MouseCursor::RESIZE_EW;
+    lua["RESIZE_NS"]       = Window::MouseCursor::RESIZE_NS;
+    lua["RESIZE_NWSE"]     = Window::MouseCursor::RESIZE_NWSE;
+    lua["RESIZE_NESW"]     = Window::MouseCursor::RESIZE_NESW;
+    lua["RESIZE_ALL"]      = Window::MouseCursor::RESIZE_ALL;
+    lua["NOT_ALLOWED"]     = Window::MouseCursor::NOT_ALLOWED;
+
+    lua["cursor"]          = [&](sol::variadic_args va) { Environment::cursor(va, *this); };
     lua["displayHeight"]   = Environment::displayHeight;
     lua["displayWidth"]    = Environment::displayWidth;
     lua["focused"]         = Environment::focused;

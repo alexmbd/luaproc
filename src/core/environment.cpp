@@ -8,6 +8,31 @@ namespace LuaProc
 {
 namespace Environment
 {
+void cursor(sol::variadic_args va, LuaProc &luaproc)
+{
+    checkVASize(va, "cursor", 1);
+    checkType(va[0], "cursor", sol::type::number);
+
+    int cursorType = va[0].as<int>();
+
+    if (luaproc.state() == LuaProc::State::Setup)
+    {
+        luaproc.addToPostSetup(std::format("    cursor({})\n", cursorType));
+        return;
+    }
+
+    if (cursorType > Window::MouseCursor::NOT_ALLOWED || cursorType < 0)
+    {
+        // Just set to the default cursor if an invalid number was passed (no error thrown)
+        SetMouseCursor(Window::MouseCursor::DEFAULT);
+        std::println("[LUAPROC WARNING] '{}' was passed as an invalid argument to '{}'. Using default cursor",
+                     cursorType, "cursor");
+    }
+    else {
+        SetMouseCursor(cursorType);
+    }
+}
+
 int displayHeight(sol::variadic_args va)
 {
     checkVASize(va, "displayHeight", 0);
@@ -77,14 +102,16 @@ void windowMove(sol::variadic_args va)
     SetWindowPosition(va[0].as<int>(), va[1].as<int>());
 };
 
-void windowResizable(sol::variadic_args va, Window &window) {
+void windowResizable(sol::variadic_args va, Window &window)
+{
     checkVASize(va, "windowResizable", 1);
     checkType(va[0], "windowResizable", sol::type::boolean);
 
     if (va[0].as<bool>()) { window.flags |= FLAG_WINDOW_RESIZABLE; }
 };
 
-void windowResize(sol::variadic_args va) {
+void windowResize(sol::variadic_args va)
+{
     checkVASize(va, "windowResize", 2);
     checkType(va[0], "windowResize", sol::type::number);
     checkType(va[1], "windowResize", sol::type::number);
@@ -92,7 +119,8 @@ void windowResize(sol::variadic_args va) {
     SetWindowSize(va[0].as<int>(), va[1].as<int>());
 };
 
-void windowTitle(sol::variadic_args va, Window &window) {
+void windowTitle(sol::variadic_args va, Window &window)
+{
     checkVASize(va, "windowTitle", 1);
     checkType(va[0], "windowTitle", sol::type::string);
 
