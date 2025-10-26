@@ -61,12 +61,15 @@ void fullScreen(sol::variadic_args va, Window &window)
     window.flags |= FLAG_FULLSCREEN_MODE;
 };
 
-void frameRate(sol::variadic_args va, Window &window)
+int frameRate(sol::variadic_args va, Window &window)
 {
+    if (va.size() == 0) { return window.frameRate; }
+
     checkVASize(va, "frameRate", 1);
     checkType(va[0], "frameRate", sol::type::number);
 
     window.frameRate = va[0].as<int>();
+    return window.frameRate;
 };
 
 int height(sol::variadic_args va)
