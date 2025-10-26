@@ -12,6 +12,11 @@ void cursor(sol::variadic_args va, LuaProc &luaproc)
 {
     if (va.size() == 0)
     {
+        if (luaproc.state() == LuaProc::State::Setup)
+        {
+            luaproc.addToPostSetup("    cursor()\n");
+            return;
+        }
         ShowCursor();
         return;
     }
