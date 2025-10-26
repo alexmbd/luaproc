@@ -1,5 +1,6 @@
 #include "luaproc.hpp"
 #include "environment.hpp"
+#include "utils.hpp"
 
 #include "raylib.h"
 
@@ -101,8 +102,6 @@ void LuaProc::run()
     }
 }
 
-LuaProc::State LuaProc::state() const { return m_currentState; }
-
 void LuaProc::addToPostSetup(const std::string &code)
 {
     // Insert code before the end of __postSetup__ (string "end" has length of 3 (+ 1))
@@ -136,28 +135,46 @@ void LuaProc::setupOutput()
 
 void LuaProc::setupEnvironment()
 {
-    sol::state &lua        = *m_lua;
+    sol::state &lua      = *m_lua;
 
-    lua["DEFAULT"]         = Window::MouseCursor::DEFAULT;
-    lua["ARROW"]           = Window::MouseCursor::ARROW;
-    lua["IBEAM"]           = Window::MouseCursor::IBEAM;
-    lua["CROSSHAIR"]       = Window::MouseCursor::CROSSHAIR;
-    lua["POINTING_HAND"]   = Window::MouseCursor::POINTING_HAND;
-    lua["RESIZE_EW"]       = Window::MouseCursor::RESIZE_EW;
-    lua["RESIZE_NS"]       = Window::MouseCursor::RESIZE_NS;
-    lua["RESIZE_NWSE"]     = Window::MouseCursor::RESIZE_NWSE;
-    lua["RESIZE_NESW"]     = Window::MouseCursor::RESIZE_NESW;
-    lua["RESIZE_ALL"]      = Window::MouseCursor::RESIZE_ALL;
-    lua["NOT_ALLOWED"]     = Window::MouseCursor::NOT_ALLOWED;
+    lua["DEFAULT"]       = Window::MouseCursor::DEFAULT;
+    lua["ARROW"]         = Window::MouseCursor::ARROW;
+    lua["IBEAM"]         = Window::MouseCursor::IBEAM;
+    lua["CROSSHAIR"]     = Window::MouseCursor::CROSSHAIR;
+    lua["POINTING_HAND"] = Window::MouseCursor::POINTING_HAND;
+    lua["RESIZE_EW"]     = Window::MouseCursor::RESIZE_EW;
+    lua["RESIZE_NS"]     = Window::MouseCursor::RESIZE_NS;
+    lua["RESIZE_NWSE"]   = Window::MouseCursor::RESIZE_NWSE;
+    lua["RESIZE_NESW"]   = Window::MouseCursor::RESIZE_NESW;
+    lua["RESIZE_ALL"]    = Window::MouseCursor::RESIZE_ALL;
+    lua["NOT_ALLOWED"]   = Window::MouseCursor::NOT_ALLOWED;
 
-    lua["cursor"]          = [&](sol::variadic_args va) { Environment::cursor(va, *this); };
-    lua["displayHeight"]   = Environment::displayHeight;
-    lua["displayWidth"]    = Environment::displayWidth;
-    lua["focused"]         = Environment::focused;
-    lua["fullScreen"]      = [&](sol::variadic_args va) { Environment::fullScreen(va, m_window); };
-    lua["frameRate"]       = [&](sol::variadic_args va) { return Environment::frameRate(va, m_window); };
-    lua["height"]          = Environment::height;
-    lua["noCursor"]        = [&](sol::variadic_args va) { Environment::noCursor(va, *this); };
+    lua["cursor"]        = [&](sol::variadic_args va) {
+        if (m_currentState == State::Setup)
+        {
+            if (va.size() == 0) { addToPostSetup("    cursor()\n"); }
+            else {
+                checkVASize(va, "cursor", 1);
+                checkType(va[0], "cursor", sol::type::number);
+
+                int cursorType = va[0].as<int>();
+
+                addToPostSetup(std::format("    cursor({})\n", cursorType));
+            }
+            return;
+        }
+        Environment::cursor(va);
+    };
+    lua["displayHeight"] = Environment::displayHeight;
+    lua["displayWidth"]  = Environment::displayWidth;
+    lua["focused"]       = Environment::focused;
+    lua["fullScreen"]    = [&](sol::variadic_args va) { Environment::fullScreen(va, m_window); };
+    lua["frameRate"]     = [&](sol::variadic_args va) { return Environment::frameRate(va, m_window); };
+    lua["height"]        = Environment::height;
+    lua["noCursor"]      = [&](sol::variadic_args va) {
+        if (m_currentState == State::Setup) { return addToPostSetup("    noCursor()\n"); }
+        Environment::noCursor(va);
+    };
     lua["size"]            = [&](sol::variadic_args va) { Environment::size(va, m_window); };
     lua["width"]           = Environment::width;
     lua["windowMove"]      = Environment::windowMove;

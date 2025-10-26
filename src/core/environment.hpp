@@ -20,14 +20,14 @@ class LuaProc;
 
 namespace Environment
 {
-void cursor(sol::variadic_args va, LuaProc &luaproc);
+void cursor(sol::variadic_args va);
 int displayHeight(sol::variadic_args va);
 int displayWidth(sol::variadic_args va);
 bool focused(sol::variadic_args va);
 void fullScreen(sol::variadic_args va, Window &window);
 int frameRate(sol::variadic_args va, Window &window);
 int height(sol::variadic_args va);
-void noCursor(sol::variadic_args va, LuaProc &luaproc);
+void noCursor(sol::variadic_args va);
 void size(sol::variadic_args va, Window &window);
 int width(sol::variadic_args va);
 void windowMove(sol::variadic_args va);

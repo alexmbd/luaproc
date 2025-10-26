@@ -6,7 +6,7 @@
 
 namespace LuaProc
 {
-std::string solTypeToString(sol::type type)
+inline std::string solTypeToString(sol::type type)
 {
     switch (type)
     {
@@ -42,14 +42,14 @@ std::string solTypeToString(sol::type type)
     }
 }
 
-void checkVASize(const sol::variadic_args &va, const std::string &name, int expectedSize)
+inline void checkVASize(const sol::variadic_args &va, const std::string &name, int expectedSize)
 {
     if (va.size() == expectedSize) { return; }
     std::println("[LUAPROC ERROR] '{}' expects {} arguments but got {}", name, expectedSize, va.size());
     std::exit(-1);
 }
 
-void checkType(const sol::stack_proxy &var, const std::string &name, sol::type type)
+inline void checkType(const sol::stack_proxy &var, const std::string &name, sol::type type)
 {
     if (var.get_type() == type) { return; }
     std::println("[LUAPROC ERROR] '{}' expects arguments of type '{}'", name, solTypeToString(type));

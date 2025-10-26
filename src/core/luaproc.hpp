@@ -47,7 +47,6 @@ class LuaProc
     ~LuaProc();
 
     void run();
-    State state() const;
     void addToPostSetup(const std::string &code);
 
   private:
