@@ -10,7 +10,7 @@ class LuaProc;
 // ENVIRONMENT (Not implemented)
 // delay, displayDensity
 // frameCount
-// noCursor, noSmooth
+// noSmooth
 // pixelDensity, pixelHeight, pixelWidth
 // settings, smooth
 // windowMoved, windowRatio, windowResized
@@ -27,6 +27,7 @@ bool focused(sol::variadic_args va);
 void fullScreen(sol::variadic_args va, Window &window);
 int frameRate(sol::variadic_args va, Window &window);
 int height(sol::variadic_args va);
+void noCursor(sol::variadic_args va, LuaProc &luaproc);
 void size(sol::variadic_args va, Window &window);
 int width(sol::variadic_args va);
 void windowMove(sol::variadic_args va);

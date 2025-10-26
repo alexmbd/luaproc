@@ -10,6 +10,12 @@ namespace Environment
 {
 void cursor(sol::variadic_args va, LuaProc &luaproc)
 {
+    if (va.size() == 0)
+    {
+        ShowCursor();
+        return;
+    }
+
     checkVASize(va, "cursor", 1);
     checkType(va[0], "cursor", sol::type::number);
 
@@ -21,6 +27,7 @@ void cursor(sol::variadic_args va, LuaProc &luaproc)
         return;
     }
 
+    ShowCursor();
     if (cursorType > Window::MouseCursor::NOT_ALLOWED || cursorType < 0)
     {
         // Just set to the default cursor if an invalid number was passed (no error thrown)
@@ -78,6 +85,19 @@ int height(sol::variadic_args va)
 
     return GetScreenHeight();
 };
+
+void noCursor(sol::variadic_args va, LuaProc &luaproc)
+{
+    checkVASize(va, "noCursor", 0);
+
+    if (luaproc.state() == LuaProc::State::Setup)
+    {
+        luaproc.addToPostSetup("    noCursor()\n");
+        return;
+    }
+
+    HideCursor();
+}
 
 void size(sol::variadic_args va, Window &window)
 {

@@ -157,6 +157,7 @@ void LuaProc::setupEnvironment()
     lua["fullScreen"]      = [&](sol::variadic_args va) { Environment::fullScreen(va, m_window); };
     lua["frameRate"]       = [&](sol::variadic_args va) { return Environment::frameRate(va, m_window); };
     lua["height"]          = Environment::height;
+    lua["noCursor"]        = [&](sol::variadic_args va) { Environment::noCursor(va, *this); };
     lua["size"]            = [&](sol::variadic_args va) { Environment::size(va, m_window); };
     lua["width"]           = Environment::width;
     lua["windowMove"]      = Environment::windowMove;
