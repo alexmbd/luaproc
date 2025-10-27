@@ -20,19 +20,19 @@ class LuaProc;
 
 namespace Environment
 {
-void cursor(sol::variadic_args va);
-int displayHeight(sol::variadic_args va);
-int displayWidth(sol::variadic_args va);
-bool focused(sol::variadic_args va);
-void fullScreen(sol::variadic_args va, Window &window);
-int frameRate(sol::variadic_args va, Window &window);
-int height(sol::variadic_args va);
-void noCursor(sol::variadic_args va);
-void size(sol::variadic_args va, Window &window);
-int width(sol::variadic_args va);
-void windowMove(sol::variadic_args va);
-void windowResizable(sol::variadic_args va, Window &window);
-void windowResize(sol::variadic_args va);
-void windowTitle(sol::variadic_args va, Window &window);
+void cursor(const std::vector<sol::object> &va);
+int displayHeight(const std::vector<sol::object> &va);
+int displayWidth(const std::vector<sol::object> &va);
+bool focused(const std::vector<sol::object> &va);
+void fullScreen(const std::vector<sol::object> &va, Window &window);
+int frameRate(const std::vector<sol::object> &va, Window &window);
+int height(const std::vector<sol::object> &va);
+void noCursor(const std::vector<sol::object> &va);
+void size(const std::vector<sol::object> &va, Window &window);
+int width(const std::vector<sol::object> &va);
+void windowMove(const std::vector<sol::object> &va);
+void windowResizable(const std::vector<sol::object> &va, Window &window);
+void windowResize(const std::vector<sol::object> &va);
+void windowTitle(const std::vector<sol::object> &va, Window &window);
 }
 }

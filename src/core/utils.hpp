@@ -42,14 +42,14 @@ inline std::string solTypeToString(sol::type type)
     }
 }
 
-inline void checkVASize(const sol::variadic_args &va, const std::string &name, int expectedSize)
+inline void checkVASize(const std::vector<sol::object> &va, const std::string &name, int expectedSize)
 {
     if (va.size() == expectedSize) { return; }
     std::println("[LUAPROC ERROR] '{}' expects {} arguments but got {}", name, expectedSize, va.size());
     std::exit(-1);
 }
 
-inline void checkType(const sol::stack_proxy &var, const std::string &name, sol::type type)
+inline void checkType(const sol::object &var, const std::string &name, sol::type type)
 {
     if (var.get_type() == type) { return; }
     std::println("[LUAPROC ERROR] '{}' expects arguments of type '{}'", name, solTypeToString(type));

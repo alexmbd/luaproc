@@ -1,5 +1,7 @@
 #pragma once
 
+#include "funchandler.hpp"
+
 #include <memory>
 
 namespace sol
@@ -47,15 +49,13 @@ class LuaProc
     ~LuaProc();
 
     void run();
-    void addToPostSetup(const std::string &code);
 
   private:
     std::unique_ptr<sol::state> m_lua;
-    Window m_window;
-    std::string m_scriptCode;
     State m_currentState;
+    Window m_window;
+    FunctionHandler<PostSetupVariant> m_postSetupFuncs;
 
-    void addScriptCode();
     void setupOutput();
     void setupEnvironment();
 };

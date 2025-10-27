@@ -8,7 +8,7 @@ namespace LuaProc
 {
 namespace Environment
 {
-void cursor(sol::variadic_args va)
+void cursor(const std::vector<sol::object> &va)
 {
     if (va.size() == 0) { return ShowCursor(); }
 
@@ -22,43 +22,42 @@ void cursor(sol::variadic_args va)
     {
         // Just set to the default cursor if an invalid number was passed (no error thrown)
         SetMouseCursor(Window::MouseCursor::DEFAULT);
-        std::println("[LUAPROC WARNING] '{}' was passed as an invalid argument to '{}'. Using default cursor",
-                     cursorType, "cursor");
+        std::println("[LUAPROC WARNING] '{}' was passed as an invalid argument to '{}'. Using default cursor", cursorType, "cursor");
     }
     else {
         SetMouseCursor(cursorType);
     }
 }
 
-int displayHeight(sol::variadic_args va)
+int displayHeight(const std::vector<sol::object> &va)
 {
     checkVASize(va, "displayHeight", 0);
 
     return GetMonitorHeight(0);
 };
 
-int displayWidth(sol::variadic_args va)
+int displayWidth(const std::vector<sol::object> &va)
 {
     checkVASize(va, "displayWidth", 0);
 
     return GetMonitorWidth(0);
 };
 
-bool focused(sol::variadic_args va)
+bool focused(const std::vector<sol::object> &va)
 {
     checkVASize(va, "focused", 0);
 
     return IsWindowFocused();
 };
 
-void fullScreen(sol::variadic_args va, Window &window)
+void fullScreen(const std::vector<sol::object> &va, Window &window)
 {
     checkVASize(va, "fullScreen", 0);
 
     window.flags |= FLAG_FULLSCREEN_MODE;
 };
 
-int frameRate(sol::variadic_args va, Window &window)
+int frameRate(const std::vector<sol::object> &va, Window &window)
 {
     if (va.size() == 0) { return window.frameRate; }
 
@@ -69,21 +68,21 @@ int frameRate(sol::variadic_args va, Window &window)
     return window.frameRate;
 };
 
-int height(sol::variadic_args va)
+int height(const std::vector<sol::object> &va)
 {
     checkVASize(va, "height", 0);
 
     return GetScreenHeight();
 };
 
-void noCursor(sol::variadic_args va)
+void noCursor(const std::vector<sol::object> &va)
 {
     checkVASize(va, "noCursor", 0);
 
     HideCursor();
 }
 
-void size(sol::variadic_args va, Window &window)
+void size(const std::vector<sol::object> &va, Window &window)
 {
     checkVASize(va, "size", 2);
     checkType(va[0], "size", sol::type::number);
@@ -93,14 +92,14 @@ void size(sol::variadic_args va, Window &window)
     window.height = va[1].as<int>();
 };
 
-int width(sol::variadic_args va)
+int width(const std::vector<sol::object> &va)
 {
     checkVASize(va, "width", 0);
 
     return GetScreenWidth();
 };
 
-void windowMove(sol::variadic_args va)
+void windowMove(const std::vector<sol::object> &va)
 {
     checkVASize(va, "windowMove", 2);
     checkType(va[0], "windowMove", sol::type::number);
@@ -109,7 +108,7 @@ void windowMove(sol::variadic_args va)
     SetWindowPosition(va[0].as<int>(), va[1].as<int>());
 };
 
-void windowResizable(sol::variadic_args va, Window &window)
+void windowResizable(const std::vector<sol::object> &va, Window &window)
 {
     checkVASize(va, "windowResizable", 1);
     checkType(va[0], "windowResizable", sol::type::boolean);
@@ -117,7 +116,7 @@ void windowResizable(sol::variadic_args va, Window &window)
     if (va[0].as<bool>()) { window.flags |= FLAG_WINDOW_RESIZABLE; }
 };
 
-void windowResize(sol::variadic_args va)
+void windowResize(const std::vector<sol::object> &va)
 {
     checkVASize(va, "windowResize", 2);
     checkType(va[0], "windowResize", sol::type::number);
@@ -126,7 +125,7 @@ void windowResize(sol::variadic_args va)
     SetWindowSize(va[0].as<int>(), va[1].as<int>());
 };
 
-void windowTitle(sol::variadic_args va, Window &window)
+void windowTitle(const std::vector<sol::object> &va, Window &window)
 {
     checkVASize(va, "windowTitle", 1);
     checkType(va[0], "windowTitle", sol::type::string);

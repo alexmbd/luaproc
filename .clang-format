@@ -8,4 +8,4 @@ AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 AllowShortLoopsOnASingleLine: true
 AllowShortFunctionsOnASingleLine: true
 FixNamespaceComments: false
-ColumnLimit: 120
+ColumnLimit: 140
