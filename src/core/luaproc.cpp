@@ -1,10 +1,9 @@
 #include "luaproc.hpp"
 #include "environment.hpp"
+#include "msghandler.hpp"
 #include "utils.hpp"
 
 #include "raylib.h"
-
-#include <print>
 
 namespace LuaProc
 {
@@ -33,9 +32,9 @@ void print(sol::variadic_args va, bool newline)
 
 void customLog(int msgType, const char *text, va_list args) {}
 
-// ---------- LUAPROC CLASS ----------
+// ---------- APPLICATION CLASS ----------
 
-LuaProc::LuaProc()
+Application::Application()
 {
     // Set defaults in case size(), frameRate() and windowTitle() are not called
     m_window.width     = 640;
@@ -44,24 +43,28 @@ LuaProc::LuaProc()
     m_window.flags     = 0;
     m_window.title     = "LuaProc";
 
-    // Use unique_ptr to forward declare the sol::state and not pollute the header file
-    m_lua           = std::make_unique<sol::state>();
-    sol::state &lua = *m_lua;
-
     // ---------- CALLBACKS ----------
+    m_lua["__MSG_HANDLER__"] = [](const std::string &msg) { conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, msg); };
+    sol::protected_function::set_default_handler(m_lua["__MSG_HANDLER__"]);
+
+    m_lua.set_exception_handler([](lua_State *L, sol::optional<const std::exception &> exception, sol::string_view description) {
+        // description will either be the what() of the exception or a description saying that we hit the general-case catch(...)
+        conditionalExit(MessageType::CPP_ERROR, Message::GENERIC, description.data());
+        return sol::stack::push(L, description);
+    });
+
     m_currentState = State::Setup;
     setupOutput();
-    setupEnvironment();
+    Environment::setup(*this);
 
     // TEMP
     const char *file                      = "cmake/dist/main.lua";
-    sol::protected_function_result script = lua.safe_script_file(file);
-    sol::protected_function setup         = lua["setup"];
-    if (!setup.valid())
-    {
-        std::println("[LUAPROC ERROR] '{}' function not found", "setup");
-        std::exit(-1);
-    }
+    sol::protected_function_result script = m_lua.safe_script_file(file, [](lua_State *L, sol::protected_function_result pfr) {
+        conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, pfr.get<std::string>());
+        return pfr;
+    });
+    sol::protected_function setup         = m_lua["setup"];
+    if (!setup.valid()) { conditionalExit(MessageType::LUA_ERROR, Message::FUNC_NOT_FOUND, "setup"); }
     setup();
 
     SetTraceLogCallback(customLog);
@@ -78,17 +81,13 @@ LuaProc::LuaProc()
     m_currentState = State::Draw;
 }
 
-LuaProc::~LuaProc() { CloseWindow(); }
+Application::~Application() { CloseWindow(); }
 
-void LuaProc::run()
+void Application::run()
 {
     while (!WindowShouldClose())
     {
-        if (IsKeyReleased(KEY_A))
-        {
-            auto &lua = *m_lua;
-            std::println("{} x {}", lua["displayWidth"]().get<int>(), lua["displayHeight"]().get<int>());
-        }
+        if (IsKeyReleased(KEY_A)) { std::println("{} x {}", m_lua["displayWidth"]().get<int>(), m_lua["displayHeight"]().get<int>()); }
 
         ClearBackground(BLACK);
         BeginDrawing();
@@ -96,66 +95,18 @@ void LuaProc::run()
     }
 }
 
-void LuaProc::setupOutput()
-{
-    sol::state &lua = *m_lua;
+sol::state &Application::lua() { return m_lua; }
 
+Window &Application::window() { return m_window; }
+
+bool Application::isState(State state) const { return m_currentState == state; }
+
+void Application::addToPostSetup(Function<PostSetupVariant> func) { m_postSetupFuncs.push_back(func); }
+
+void Application::setupOutput()
+{
     // OUTPUT
-    lua["print"]   = [](sol::variadic_args va) { print(va, false); };
-    lua["println"] = [](sol::variadic_args va) { print(va, true); };
-}
-
-void LuaProc::setupEnvironment()
-{
-    sol::state &lua      = *m_lua;
-
-    lua["DEFAULT"]       = Window::MouseCursor::DEFAULT;
-    lua["ARROW"]         = Window::MouseCursor::ARROW;
-    lua["IBEAM"]         = Window::MouseCursor::IBEAM;
-    lua["CROSSHAIR"]     = Window::MouseCursor::CROSSHAIR;
-    lua["POINTING_HAND"] = Window::MouseCursor::POINTING_HAND;
-    lua["RESIZE_EW"]     = Window::MouseCursor::RESIZE_EW;
-    lua["RESIZE_NS"]     = Window::MouseCursor::RESIZE_NS;
-    lua["RESIZE_NWSE"]   = Window::MouseCursor::RESIZE_NWSE;
-    lua["RESIZE_NESW"]   = Window::MouseCursor::RESIZE_NESW;
-    lua["RESIZE_ALL"]    = Window::MouseCursor::RESIZE_ALL;
-    lua["NOT_ALLOWED"]   = Window::MouseCursor::NOT_ALLOWED;
-
-    lua["cursor"]        = [&](sol::variadic_args va) {
-        std::vector<sol::object> vec(va.begin(), va.end());
-        if (m_currentState == State::Setup)
-        {
-            Function<PostSetupVariant> func{Environment::cursor, vec};
-            m_postSetupFuncs.push_back(func);
-            return;
-        }
-        Environment::cursor(vec);
-    };
-    lua["displayHeight"] = [](sol::variadic_args va) { return Environment::displayHeight(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["displayWidth"]  = [](sol::variadic_args va) { return Environment::displayWidth(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["focused"]       = [](sol::variadic_args va) { return Environment::focused(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["fullScreen"] = [&](sol::variadic_args va) { Environment::fullScreen(std::vector<sol::object>(va.begin(), va.end()), m_window); };
-    lua["frameRate"]  = [&](sol::variadic_args va) {
-        return Environment::frameRate(std::vector<sol::object>(va.begin(), va.end()), m_window);
-    };
-    lua["height"]   = [](sol::variadic_args va) { return Environment::height(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["noCursor"] = [&](sol::variadic_args va) {
-        std::vector<sol::object> vec(va.begin(), va.end());
-        if (m_currentState == State::Setup)
-        {
-            Function<PostSetupVariant> func{Environment::noCursor, vec};
-            m_postSetupFuncs.push_back(func);
-            return;
-        }
-        Environment::noCursor(vec);
-    };
-    lua["size"]            = [&](sol::variadic_args va) { Environment::size(std::vector<sol::object>(va.begin(), va.end()), m_window); };
-    lua["width"]           = [](sol::variadic_args va) { return Environment::width(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["windowMove"]      = [](sol::variadic_args va) { Environment::windowMove(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["windowResizable"] = [&](sol::variadic_args va) {
-        Environment::windowResizable(std::vector<sol::object>(va.begin(), va.end()), m_window);
-    };
-    lua["windowResize"] = [](sol::variadic_args va) { Environment::windowResize(std::vector<sol::object>(va.begin(), va.end())); };
-    lua["windowTitle"] = [&](sol::variadic_args va) { Environment::windowTitle(std::vector<sol::object>(va.begin(), va.end()), m_window); };
+    m_lua["print"]   = [](sol::variadic_args va) { print(va, false); };
+    m_lua["println"] = [](sol::variadic_args va) { print(va, true); };
 }
 }

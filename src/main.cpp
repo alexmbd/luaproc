@@ -2,8 +2,8 @@
 
 int main()
 {
-    LuaProc::LuaProc luaproc;
-    luaproc.run();
+    LuaProc::Application app;
+    app.run();
 
     return 0;
 }
