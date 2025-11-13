@@ -1,11 +1,49 @@
 #pragma once
 
+#include "sol.hpp"
+
 #include <array>
 #include <print>
 #include <string>
 
 namespace LuaProc
 {
+inline std::string solTypeToString(sol::type type)
+{
+    switch (type)
+    {
+    case sol::type::boolean:
+        return "boolean";
+
+    case sol::type::function:
+        return "function";
+
+    case sol::type::lightuserdata:
+        return "lightuserdata";
+
+    case sol::type::nil:
+        return "nil";
+
+    case sol::type::number:
+        return "number";
+
+    case sol::type::string:
+        return "string";
+
+    case sol::type::table:
+        return "table";
+
+    case sol::type::thread:
+        return "thread";
+
+    case sol::type::userdata:
+        return "userdata";
+
+    default:
+        return "unknown type";
+    }
+}
+
 enum class MessageType
 {
     CPP_WARNING,
@@ -34,7 +72,8 @@ constexpr std::array<const std::string_view, static_cast<std::size_t>(Message::I
 }
 
 // This function will log the message and will exit the program if the MessageType is an *_ERROR
-template <typename... T> inline void conditionalExit(MessageType msgType, Message msg, T &&...msgArgs)
+template <typename... T>
+inline void conditionalExit(MessageType msgType, Message msg, T &&...msgArgs)
 {
     std::println("{} {}", Messages::prefixes[static_cast<std::size_t>(msgType)],
                  std::vformat(Messages::templates[static_cast<std::size_t>(msg)], std::make_format_args(msgArgs...)));

@@ -15,11 +15,13 @@ using PostSetupVariant = std::variant<FuncVoid>;
 
 // HANDLER
 
-template <typename VariantType> struct Function
+template <typename VariantType>
+struct Function
 {
     VariantType function;
     std::vector<sol::object> args;
 };
 
-template <typename VariantType> using FunctionHandler = std::vector<Function<VariantType>>;
+template <typename VariantType>
+using FunctionHandler = std::vector<Function<VariantType>>;
 }

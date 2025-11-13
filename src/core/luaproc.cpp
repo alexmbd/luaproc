@@ -1,7 +1,6 @@
 #include "luaproc.hpp"
 #include "environment.hpp"
 #include "msghandler.hpp"
-#include "utils.hpp"
 
 #include "raylib.h"
 
