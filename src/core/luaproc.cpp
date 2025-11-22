@@ -1,37 +1,13 @@
 #include "luaproc.hpp"
 #include "environment.hpp"
 #include "msghandler.hpp"
+#include "output.hpp"
 
 #include "raylib.h"
 
 namespace LuaProc
 {
-
-// ---------- OUTPUT ----------
-
-void print(sol::variadic_args va, bool newline)
-{
-    // Get Type (https://github.com/ThePhD/sol2/issues/850#issuecomment-515720422)
-    std::string text = "";
-    for (int i = 0; i < va.size(); i++)
-    {
-        if (va[i].get_type() == sol::type::nil) { text += "nil"; }
-        else if (va[i].get_type() == sol::type::boolean) { text += va[i].as<bool>() ? "true" : "false"; }
-        else {
-            text += va[i].as<std::string>();
-        }
-
-        if (i != va.size() - 1) { text += " "; }
-    }
-    if (newline) { std::println("{}", text); }
-    else {
-        std::print("{}", text);
-    }
-}
-
 void customLog(int msgType, const char *text, va_list args) {}
-
-// ---------- APPLICATION CLASS ----------
 
 Application::Application()
 {
@@ -53,8 +29,8 @@ Application::Application()
     });
 
     m_currentState = State::Setup;
-    setupOutput();
-    Environment::setup(*this);
+    setupOutput(*this);
+    setupEnvironment(*this);
 
     // TEMP
     const char *file                      = "cmake/dist/main.lua";
@@ -101,11 +77,4 @@ Window &Application::window() { return m_window; }
 bool Application::isState(State state) const { return m_currentState == state; }
 
 void Application::addToPostSetup(Function<PostSetupVariant> func) { m_postSetupFuncs.push_back(func); }
-
-void Application::setupOutput()
-{
-    // OUTPUT
-    m_lua["print"]   = [](sol::variadic_args va) { print(va, false); };
-    m_lua["println"] = [](sol::variadic_args va) { print(va, true); };
-}
 }

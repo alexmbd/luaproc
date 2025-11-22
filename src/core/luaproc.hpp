@@ -39,7 +39,5 @@ class Application
     Window m_window;
     State m_currentState;
     FunctionHandler<PostSetupVariant> m_postSetupFuncs;
-
-    void setupOutput();
 };
 }
