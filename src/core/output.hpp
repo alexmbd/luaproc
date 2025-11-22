@@ -10,7 +10,7 @@ namespace LuaProc
 
 namespace Output
 {
-void print(sol::variadic_args va, bool newline)
+inline void print(sol::variadic_args va, bool newline)
 {
     // Get Type (https://github.com/ThePhD/sol2/issues/850#issuecomment-515720422)
     std::string text = "";
