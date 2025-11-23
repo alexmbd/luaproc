@@ -64,10 +64,10 @@ enum class Message
 
 namespace Messages
 {
-constexpr std::array<const char *, static_cast<std::size_t>(MessageType::INVALID)> prefixes{
+inline constexpr std::array<const char *, static_cast<std::size_t>(MessageType::INVALID)> prefixes{
     "[LUAPROC WARNING (CPP)]", "[LUAPROC ERROR (CPP)]", "[LUAPROC WARNING (LUA)]", "[LUAPROC ERROR (LUA)]"};
 
-constexpr std::array<const std::string_view, static_cast<std::size_t>(Message::INVALID)> templates{
+inline constexpr std::array<const std::string_view, static_cast<std::size_t>(Message::INVALID)> templates{
     "'{}' function not found", "'{}' expects {} arguments but got {}", "'{}' expects arguments of type '{}'", "{}"};
 }
 

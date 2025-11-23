@@ -2,6 +2,8 @@
 
 #include "funchandler.hpp"
 
+#include "raylib.h"
+
 namespace LuaProc
 {
 struct Window
@@ -11,6 +13,7 @@ struct Window
     int frameRate;
     int flags;
     std::string title;
+    Color background;
 };
 
 class Application

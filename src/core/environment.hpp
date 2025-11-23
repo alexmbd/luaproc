@@ -3,8 +3,6 @@
 #include "luaproc.hpp"
 #include "msghandler.hpp"
 
-#include "raylib.h"
-
 namespace LuaProc
 {
 // ENVIRONMENT (Not implemented)
