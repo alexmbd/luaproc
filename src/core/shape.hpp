@@ -16,13 +16,7 @@ inline void setupShape(Application &app)
         {
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "line", "4 or 6", va.size());
         }
-        for (const sol::stack_proxy &arg : va)
-        {
-            if (arg.get_type() != sol::type::number)
-            {
-                conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "line", solTypeToString(sol::type::number));
-            }
-        }
+        checkArgType("line", va, sol::type::number);
         if (va.size() == 4)
         {
             DrawLine3D(Vector3{va[0].as<float>(), va[1].as<float>(), 0.0f}, Vector3{va[2].as<float>(), va[3].as<float>(), 0.0f}, WHITE);

@@ -5,6 +5,7 @@
 #include <array>
 #include <print>
 #include <string>
+#include <vector>
 
 namespace LuaProc
 {
@@ -91,6 +92,30 @@ inline void conditionalExit(MessageType msgType, Message msg, T &&...msgArgs)
     default:
         std::println("{} Invalid MessageType", Messages::prefixes[static_cast<std::size_t>(MessageType::CPP_ERROR)]);
         std::exit(-1);
+    }
+}
+
+inline void checkArgSize(const std::string &name, int expectedSize, int size)
+{
+    if (expectedSize == size) { return; }
+    conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, name, expectedSize, size);
+}
+
+inline void checkArgType(const std::string &name, const sol::variadic_args &va, sol::type type)
+{
+    for (const sol::stack_proxy &arg : va)
+    {
+        if (arg.get_type() == type) { continue; }
+        conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, name, solTypeToString(type));
+    }
+}
+
+inline void checkArgType(const std::string &name, const std::vector<sol::object> &va, sol::type type)
+{
+    for (const sol::object &arg : va)
+    {
+        if (arg.get_type() == type) { continue; }
+        conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, name, solTypeToString(type));
     }
 }
 }

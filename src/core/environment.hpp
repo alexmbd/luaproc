@@ -22,11 +22,8 @@ inline void cursor(const std::vector<sol::object> &va)
 {
     if (va.size() == 0) { return ShowCursor(); }
 
-    if (va.size() != 1) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "cursor", 1, va.size()); }
-    if (va[0].get_type() != sol::type::number)
-    {
-        conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "cursor", solTypeToString(sol::type::number));
-    }
+    checkArgSize("cursor", 1, va.size());
+    checkArgType("cursor", va, sol::type::number);
 
     int cursorType = va[0].as<int>();
 
@@ -44,7 +41,7 @@ inline void cursor(const std::vector<sol::object> &va)
 
 inline void noCursor(const std::vector<sol::object> &va)
 {
-    if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "noCursor", 0, va.size()); }
+    checkArgSize("noCursor", 0, va.size());
     HideCursor();
 };
 }
@@ -72,22 +69,22 @@ inline void setupEnvironment(Application &app)
     };
 
     lua["displayHeight"] = [](sol::variadic_args va) {
-        if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "displayHeight", 0, va.size()); }
+        checkArgSize("displayHeight", 0, va.size());
         return GetMonitorHeight(0);
     };
 
     lua["displayWidth"] = [](sol::variadic_args va) {
-        if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "displayWidth", 0, va.size()); }
+        checkArgSize("displayWidth", 0, va.size());
         return GetMonitorWidth(0);
     };
 
     lua["focused"] = [](sol::variadic_args va) {
-        if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "focused", 0, va.size()); }
+        checkArgSize("focused", 0, va.size());
         return IsWindowFocused();
     };
 
     lua["fullScreen"] = [&app](sol::variadic_args va) {
-        if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "fullScreen", 0, va.size()); }
+        checkArgSize("fullScreen", 0, va.size());
         app.window().flags |= FLAG_FULLSCREEN_MODE;
     };
 
@@ -95,16 +92,13 @@ inline void setupEnvironment(Application &app)
         if (va.size() == 0) { return app.window().frameRate; }
 
         if (va.size() != 1) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "frameRate", 1, va.size()); }
-        if (va[0].get_type() != sol::type::number)
-        {
-            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "frameRate", solTypeToString(sol::type::number));
-        }
+        checkArgType("frameRate", va, sol::type::number);
         app.window().frameRate = va[0].as<int>();
         return app.window().frameRate;
     };
 
     lua["height"] = [](sol::variadic_args va) {
-        if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "height", 0, va.size()); }
+        checkArgSize("height", 0, va.size());
         return GetScreenHeight();
     };
 
@@ -115,53 +109,38 @@ inline void setupEnvironment(Application &app)
     };
 
     lua["size"] = [&app](sol::variadic_args va) {
-        if (va.size() != 2) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "size", 2, va.size()); }
-        if ((va[0].get_type() != sol::type::number) || (va[1].get_type() != sol::type::number))
-        {
-            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "size", solTypeToString(sol::type::number));
-        }
+        checkArgSize("size", 2, va.size());
+        checkArgType("size", va, sol::type::number);
         app.window().width  = va[0].as<int>();
         app.window().height = va[1].as<int>();
     };
 
     lua["width"] = [](sol::variadic_args va) {
-        if (va.size() != 0) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "width", 0, va.size()); }
+        checkArgSize("width", 0, va.size());
         return GetScreenWidth();
     };
 
     lua["windowMove"] = [](sol::variadic_args va) {
-        if (va.size() != 2) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "windowMove", 2, va.size()); }
-        if ((va[0].get_type() != sol::type::number) || (va[1].get_type() != sol::type::number))
-        {
-            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "windowMove", solTypeToString(sol::type::number));
-        }
+        checkArgSize("windowMove", 2, va.size());
+        checkArgType("windowMove", va, sol::type::number);
         SetWindowPosition(va[0].as<int>(), va[1].as<int>());
     };
 
     lua["windowResizable"] = [&app](sol::variadic_args va) {
-        if (va.size() != 1) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "windowResizable", 1, va.size()); }
-        if (va[0].get_type() != sol::type::boolean)
-        {
-            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "windowResizable", solTypeToString(sol::type::boolean));
-        }
+        checkArgSize("windowResizable", 1, va.size());
+        checkArgType("windowResizable", va, sol::type::boolean);
         if (va[0].as<bool>()) { app.window().flags |= FLAG_WINDOW_RESIZABLE; }
     };
 
     lua["windowResize"] = [](sol::variadic_args va) {
-        if (va.size() != 2) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "windowResize", 2, va.size()); }
-        if ((va[0].get_type() != sol::type::number) || (va[1].get_type() != sol::type::number))
-        {
-            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "windowResize", solTypeToString(sol::type::number));
-        }
+        checkArgSize("windowResize", 2, va.size());
+        checkArgType("windowResize", va, sol::type::number);
         SetWindowSize(va[0].as<int>(), va[1].as<int>());
     };
 
     lua["windowTitle"] = [&app](sol::variadic_args va) {
-        if (va.size() != 1) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "windowTitle", 1, va.size()); }
-        if (va[0].get_type() != sol::type::string)
-        {
-            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "windowTitle", solTypeToString(sol::type::string));
-        }
+        checkArgSize("windowTitle", 1, va.size());
+        checkArgType("windowTitle", va, sol::type::string);
         app.window().title = va[0].as<std::string>();
     };
 }
