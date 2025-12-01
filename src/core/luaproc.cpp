@@ -1,12 +1,6 @@
 #include "luaproc.hpp"
+#include "core.hpp"
 #include "msghandler.hpp"
-
-#include "color.hpp"
-#include "environment.hpp"
-#include "math.hpp"
-#include "output.hpp"
-#include "shape.hpp"
-#include "transform.hpp"
 
 namespace LuaProc
 {
@@ -33,12 +27,7 @@ Application::Application()
     });
 
     m_currentState = State::Setup;
-    setupColor(*this);
-    setupEnvironment(*this);
-    setupMath(*this);
-    setupOutput(*this);
-    setupShape(*this);
-    setupTransform(*this);
+    setupCore(*this);
 
     // TEMP
     const char *file                      = "cmake/dist/main.lua";

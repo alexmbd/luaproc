@@ -9,6 +9,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/cmake/dist)
 
 set(LUAPROC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/core/core.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/luaproc.cpp
 )
 
