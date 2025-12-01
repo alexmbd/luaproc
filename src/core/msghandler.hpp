@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sol.hpp"
+#include "safesol.hpp"
 
 #include <array>
 #include <print>
