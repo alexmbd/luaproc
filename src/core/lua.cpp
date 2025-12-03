@@ -48,7 +48,7 @@ void print(sol::variadic_args va, bool newline)
     {
         if (va[i].get_type() == sol::type::nil) { text += "nil"; }
         else if (va[i].get_type() == sol::type::boolean) { text += va[i].as<bool>() ? "true" : "false"; }
-        else if (va[i].get_type() == sol::type::number) { text += std::to_string(va[i].as<double>()); }
+        else if (va[i].get_type() == sol::type::number) { text += std::format("{}", va[i].as<double>()); }
         else {
             text += va[i].as<std::string>();
         }
