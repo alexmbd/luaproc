@@ -1,4 +1,4 @@
-#include "core/luaproc.hpp"
+#include "core/app.hpp"
 
 int main()
 {
