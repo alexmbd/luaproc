@@ -10,7 +10,7 @@ Application::Application()
     SetTraceLogCallback(customLog);
 
     // TEMP
-    const char *file = "cmake/dist/main.lua";
+    const char *file = "examples/main.lua";
     m_lua            = Lua(file);
 }
 

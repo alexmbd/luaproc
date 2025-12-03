@@ -40,7 +40,6 @@ class Lua
     const Window &window() const;
     const Canvas &canvas() const;
 
-    void setState(State state);
     void setScript(const char *filename);
     void draw();
 

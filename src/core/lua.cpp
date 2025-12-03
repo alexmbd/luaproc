@@ -48,6 +48,7 @@ void print(sol::variadic_args va, bool newline)
     {
         if (va[i].get_type() == sol::type::nil) { text += "nil"; }
         else if (va[i].get_type() == sol::type::boolean) { text += va[i].as<bool>() ? "true" : "false"; }
+        else if (va[i].get_type() == sol::type::number) { text += std::to_string(va[i].as<double>()); }
         else {
             text += va[i].as<std::string>();
         }
@@ -90,8 +91,6 @@ Lua::Lua(const char *filename)
 const Window &Lua::window() const { return m_window; }
 
 const Canvas &Lua::canvas() const { return m_canvas; }
-
-void Lua::setState(State state) { m_state = state; }
 
 void Lua::setScript(const char *filename)
 {
@@ -158,7 +157,7 @@ void Lua::setupColor()
             {
                 conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "background", solTypeToString(sol::type::number));
             }
-            if (arg.as<double>() < 0)
+            if ((arg.as<double>() < 0) || (arg.as<double>() > 255))
             {
                 conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, "'background' arguments can only be numbers from 0 to 255");
             }
