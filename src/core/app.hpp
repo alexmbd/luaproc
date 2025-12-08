@@ -13,6 +13,6 @@ class Application
     void run();
 
   private:
-    Lua m_lua;
+    std::shared_ptr<Lua> m_lua;
 };
 }
