@@ -91,7 +91,7 @@ void setColor(const sol::variadic_args &va, Color &color, Canvas::ColorMode colo
 // ---------- COLOR ----------
 void setupColor(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua   = *(luaptr->lua);
+    sol::state &lua   = luaptr->lua;
     lua["RGB"]        = static_cast<int>(Canvas::ColorMode::RGB);
     lua["HSB"]        = static_cast<int>(Canvas::ColorMode::HSB);
 
@@ -105,8 +105,8 @@ void setupColor(std::shared_ptr<Lua> luaptr)
         {
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "background", "1 to 4", va.size());
         }
-        checkColorArg("background", va, luaptr->canvas->colorMode);
-        setColor(va, luaptr->canvas->background, luaptr->canvas->colorMode);
+        checkColorArg("background", va, luaptr->canvas.colorMode);
+        setColor(va, luaptr->canvas.background, luaptr->canvas.colorMode);
     };
 
     lua["colorMode"] = [luaptr](sol::variadic_args va) {
@@ -116,7 +116,7 @@ void setupColor(std::shared_ptr<Lua> luaptr)
         // colorMode(mode, max1, max2, max3, maxA)
         checkArgSize("colorMode", 1, va.size());
         checkArgType("colorMode", va, sol::type::number);
-        luaptr->canvas->colorMode = static_cast<Canvas::ColorMode>(va[0].as<int>());
+        luaptr->canvas.colorMode = static_cast<Canvas::ColorMode>(va[0].as<int>());
     };
 
     lua["fill"] = [luaptr](sol::variadic_args va) {
@@ -130,18 +130,19 @@ void setupColor(std::shared_ptr<Lua> luaptr)
         {
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "fill", "1 to 4", va.size());
         }
-        checkColorArg("fill", va, luaptr->canvas->colorMode);
-        setColor(va, luaptr->canvas->fill, luaptr->canvas->colorMode);
+        checkColorArg("fill", va, luaptr->canvas.colorMode);
+        setColor(va, luaptr->canvas.fill, luaptr->canvas.colorMode);
+        luaptr->canvas.noFill = false;
     };
 
     lua["noFill"] = [luaptr](sol::variadic_args va) {
         checkArgSize("noFill", 0, va.size());
-        luaptr->canvas->noFill = true;
+        luaptr->canvas.noFill = true;
     };
 
     lua["noStroke"] = [luaptr](sol::variadic_args va) {
         checkArgSize("noStroke", 0, va.size());
-        luaptr->canvas->noStroke = true;
+        luaptr->canvas.noStroke = true;
     };
 
     lua["stroke"] = [luaptr](sol::variadic_args va) {
@@ -155,8 +156,9 @@ void setupColor(std::shared_ptr<Lua> luaptr)
         {
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "stroke", "1 to 4", va.size());
         }
-        checkColorArg("stroke", va, luaptr->canvas->colorMode);
-        setColor(va, luaptr->canvas->stroke, luaptr->canvas->colorMode);
+        checkColorArg("stroke", va, luaptr->canvas.colorMode);
+        setColor(va, luaptr->canvas.stroke, luaptr->canvas.colorMode);
+        luaptr->canvas.noStroke = false;
     };
 }
 }
@@ -205,7 +207,7 @@ void noCursor(const std::vector<sol::object> &va)
 
 void setupEnvironment(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua      = *(luaptr->lua);
+    sol::state &lua      = luaptr->lua;
     lua["DEFAULT"]       = MOUSE_CURSOR_DEFAULT;
     lua["ARROW"]         = MOUSE_CURSOR_ARROW;
     lua["IBEAM"]         = MOUSE_CURSOR_IBEAM;
@@ -248,15 +250,15 @@ void setupEnvironment(std::shared_ptr<Lua> luaptr)
 
     lua["fullScreen"] = [luaptr](sol::variadic_args va) {
         checkArgSize("fullScreen", 0, va.size());
-        luaptr->window->flags |= FLAG_FULLSCREEN_MODE;
+        luaptr->window.flags |= FLAG_FULLSCREEN_MODE;
     };
 
     lua["frameRate"] = [luaptr](sol::variadic_args va) {
         if (va.size() > 1) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "frameRate", "0 to 1", va.size()); }
-        if (va.size() == 0) { return luaptr->window->frameRate; }
+        if (va.size() == 0) { return luaptr->window.frameRate; }
         checkArgType("frameRate", va, sol::type::number);
-        luaptr->window->frameRate = va[0].as<int>();
-        return luaptr->window->frameRate;
+        luaptr->window.frameRate = va[0].as<int>();
+        return luaptr->window.frameRate;
     };
 
     lua["height"] = [](sol::variadic_args va) {
@@ -280,27 +282,27 @@ void setupEnvironment(std::shared_ptr<Lua> luaptr)
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "size", "2 to 3", va.size());
         }
         checkArgType("size", va, sol::type::number);
-        luaptr->window->width    = va[0].as<int>();
-        luaptr->window->height   = va[1].as<int>();
-        luaptr->canvas->renderer = va.size() == 2 ? Canvas::Renderer::P2D : static_cast<Canvas::Renderer>(va[2].as<int>());
+        luaptr->window.width    = va[0].as<int>();
+        luaptr->window.height   = va[1].as<int>();
+        luaptr->canvas.renderer = va.size() == 2 ? Canvas::Renderer::P2D : static_cast<Canvas::Renderer>(va[2].as<int>());
 
-        if (luaptr->canvas->renderer == Canvas::Renderer::P2D)
+        if (luaptr->canvas.renderer == Canvas::Renderer::P2D)
         {
             // TODO: Recheck position and target values
-            luaptr->canvas->camera.position   = Vector3{luaptr->window->width / 2.0f, luaptr->window->height / 2.0f, -1.0f};
-            luaptr->canvas->camera.target     = Vector3{luaptr->window->width / 2.0f, luaptr->window->height / 2.0f, 0.0f};
-            luaptr->canvas->camera.up         = Vector3{0.0f, -1.0f, 0.0f};
-            luaptr->canvas->camera.fovy       = static_cast<float>(luaptr->window->height);
-            luaptr->canvas->camera.projection = CAMERA_ORTHOGRAPHIC;
+            luaptr->canvas.camera.position   = Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f, -1.0f};
+            luaptr->canvas.camera.target     = Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f, 0.0f};
+            luaptr->canvas.camera.up         = Vector3{0.0f, -1.0f, 0.0f};
+            luaptr->canvas.camera.fovy       = static_cast<float>(luaptr->window.height);
+            luaptr->canvas.camera.projection = CAMERA_ORTHOGRAPHIC;
             rlSetClipPlanes(-1000, 1000);
         }
-        else if (luaptr->canvas->renderer == Canvas::Renderer::P3D)
+        else if (luaptr->canvas.renderer == Canvas::Renderer::P3D)
         {
-            luaptr->canvas->camera.position   = Vector3{luaptr->window->width / 2.0f, luaptr->window->height / 2.0f, -1.0f};
-            luaptr->canvas->camera.target     = Vector3{luaptr->window->width / 2.0f, luaptr->window->height / 2.0f, 0.0f};
-            luaptr->canvas->camera.up         = Vector3{0.0f, -1.0f, 0.0f};
-            luaptr->canvas->camera.fovy       = static_cast<float>(luaptr->window->height);
-            luaptr->canvas->camera.projection = CAMERA_PERSPECTIVE;
+            luaptr->canvas.camera.position   = Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f, -1.0f};
+            luaptr->canvas.camera.target     = Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f, 0.0f};
+            luaptr->canvas.camera.up         = Vector3{0.0f, -1.0f, 0.0f};
+            luaptr->canvas.camera.fovy       = static_cast<float>(luaptr->window.height);
+            luaptr->canvas.camera.projection = CAMERA_PERSPECTIVE;
             rlSetClipPlanes(-1000, 1000);
         }
     };
@@ -319,7 +321,7 @@ void setupEnvironment(std::shared_ptr<Lua> luaptr)
     lua["windowResizable"] = [luaptr](sol::variadic_args va) {
         checkArgSize("windowResizable", 1, va.size());
         checkArgType("windowResizable", va, sol::type::boolean);
-        if (va[0].as<bool>()) { luaptr->window->flags |= FLAG_WINDOW_RESIZABLE; }
+        if (va[0].as<bool>()) { luaptr->window.flags |= FLAG_WINDOW_RESIZABLE; }
     };
 
     lua["windowResize"] = [](sol::variadic_args va) {
@@ -331,7 +333,7 @@ void setupEnvironment(std::shared_ptr<Lua> luaptr)
     lua["windowTitle"] = [luaptr](sol::variadic_args va) {
         checkArgSize("windowTitle", 1, va.size());
         checkArgType("windowTitle", va, sol::type::string);
-        luaptr->window->title = va[0].as<std::string>();
+        luaptr->window.title = va[0].as<std::string>();
     };
 }
 }
@@ -341,7 +343,7 @@ namespace Math
 // ---------- MATH ----------
 void setupMath(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua = *(luaptr->lua);
+    sol::state &lua = luaptr->lua;
 
     // NOTE: All angles in lua are in radians
 
@@ -405,7 +407,7 @@ void print(sol::variadic_args va, bool newline)
 // ---------- OUTPUT ----------
 void setupOutput(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua = *(luaptr->lua);
+    sol::state &lua = luaptr->lua;
 
     lua["print"]    = [](sol::variadic_args va) { Output::print(va, false); };
     lua["println"]  = [](sol::variadic_args va) { Output::print(va, true); };
@@ -417,14 +419,14 @@ namespace LightsCamera
 // ---------- LIGHTS CAMERA ----------
 void setupLightsCamera(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua = *(luaptr->lua);
+    sol::state &lua = luaptr->lua;
 
     lua["ortho"]    = [luaptr](sol::variadic_args va) {
         // TODO: Not implemented yet
         // ortho(left, right, bottom, top)
         // ortho(left, right, bottom, top, near, far)
         checkArgSize("ortho", 0, va.size());
-        luaptr->canvas->camera.projection = CAMERA_ORTHOGRAPHIC;
+        luaptr->canvas.camera.projection = CAMERA_ORTHOGRAPHIC;
     };
 }
 }
@@ -434,7 +436,7 @@ namespace Shape
 // ---------- SHAPE ----------
 void setupShape(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua = *(luaptr->lua);
+    sol::state &lua = luaptr->lua;
 
     lua["line"]     = [luaptr](sol::variadic_args va) {
         if ((va.size() != 4) && (va.size() != 6))
@@ -445,19 +447,19 @@ void setupShape(std::shared_ptr<Lua> luaptr)
         if (va.size() == 4)
         {
             DrawLine3D(Vector3{va[0].as<float>(), va[1].as<float>(), 0.0f}, Vector3{va[2].as<float>(), va[3].as<float>(), 0.0f},
-                           luaptr->canvas->stroke);
+                           luaptr->canvas.stroke);
         }
         else
         {
             DrawLine3D(Vector3{va[0].as<float>(), va[1].as<float>(), va[2].as<float>()},
-                           Vector3{va[3].as<float>(), va[4].as<float>(), va[5].as<float>()}, luaptr->canvas->stroke);
+                           Vector3{va[3].as<float>(), va[4].as<float>(), va[5].as<float>()}, luaptr->canvas.stroke);
         }
     };
 
     lua["sphere"] = [luaptr](sol::variadic_args va) {
         checkArgSize("sphere", 1, va.size());
         checkArgType("sphere", va, sol::type::number);
-        DrawSphere(Vector3{0.0f, 0.0f, 0.0f}, va[0].as<double>(), luaptr->canvas->fill);
+        DrawSphere(Vector3{0.0f, 0.0f, 0.0f}, va[0].as<double>(), luaptr->canvas.fill);
     };
 }
 }
@@ -467,7 +469,7 @@ namespace TransformNS
 // ---------- TRANSFORM ----------
 void setupTransform(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua = *(luaptr->lua);
+    sol::state &lua = luaptr->lua;
 
     // NOTE: All angles in lua are in radians
 
@@ -521,7 +523,7 @@ void setupTransform(std::shared_ptr<Lua> luaptr)
 // ---------- LUA ----------
 void setup(std::shared_ptr<Lua> luaptr)
 {
-    sol::state &lua = *(luaptr->lua);
+    sol::state &lua = luaptr->lua;
 
     // Error Handlers
     lua["__MSG_HANDLER__"] = [](const std::string &msg) { conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, msg); };
@@ -548,21 +550,20 @@ void Lua::update()
 {
     if (IsWindowResized())
     {
-        if (canvas->renderer == Canvas::Renderer::P2D)
+        if (canvas.renderer == Canvas::Renderer::P2D)
         {
-            float width             = static_cast<float>(GetScreenWidth());
-            float height            = static_cast<float>(GetScreenHeight());
-            canvas->camera.position = Vector3{width / 2.0f, height / 2.0f, -1.0f};
-            canvas->camera.target   = Vector3{width / 2.0f, height / 2.0f, 0.0f};
-            canvas->camera.fovy     = height;
+            float width            = static_cast<float>(GetScreenWidth());
+            float height           = static_cast<float>(GetScreenHeight());
+            canvas.camera.position = Vector3{width / 2.0f, height / 2.0f, -1.0f};
+            canvas.camera.target   = Vector3{width / 2.0f, height / 2.0f, 0.0f};
+            canvas.camera.fovy     = height;
         }
     }
 }
 
 void Lua::draw()
 {
-    sol::state &luaState            = *lua;
-    sol::protected_function drawLua = luaState["draw"];
+    sol::protected_function drawLua = lua["draw"];
     if (!drawLua.valid()) { conditionalExit(MessageType::LUA_ERROR, Message::FUNC_NOT_FOUND, "draw"); }
     drawLua();
 }

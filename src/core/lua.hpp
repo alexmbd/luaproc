@@ -60,9 +60,9 @@ struct Lua
         std::vector<sol::object> args;
     };
 
-    std::shared_ptr<sol::state> lua;
-    std::shared_ptr<Window> window;
-    std::shared_ptr<Canvas> canvas;
+    sol::state lua;
+    Window window;
+    Canvas canvas;
     State state;
     std::vector<PostSetupFunction> postSetupFuncs;
 

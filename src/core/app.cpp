@@ -12,11 +12,8 @@ Application::Application()
     // TEMP
     const char *filename = "examples/sin_circle.lua";
     m_lua                = std::make_shared<Lua>();
-    m_lua->lua           = std::make_shared<sol::state>();
-    m_lua->canvas        = std::make_shared<Canvas>();
-    m_lua->window        = std::make_shared<Window>();
 
-    sol::state &lua      = *(m_lua->lua);
+    sol::state &lua      = m_lua->lua;
     setup(m_lua);
 
     lua.safe_script_file(filename, [](lua_State *L, sol::protected_function_result pfr) {
@@ -27,13 +24,13 @@ Application::Application()
     if (!setupLua.valid()) { conditionalExit(MessageType::LUA_ERROR, Message::FUNC_NOT_FOUND, "setup"); }
     setupLua();
 
-    if ((m_lua->window->width <= 0) || (m_lua->window->height <= 0))
+    if ((m_lua->window.width <= 0) || (m_lua->window.height <= 0))
     {
         conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, "window size not valid must be greater than 0");
     }
-    SetTargetFPS(m_lua->window->frameRate);
-    SetConfigFlags(m_lua->window->flags);
-    InitWindow(m_lua->window->width, m_lua->window->height, m_lua->window->title.c_str());
+    SetTargetFPS(m_lua->window.frameRate);
+    SetConfigFlags(m_lua->window.flags);
+    InitWindow(m_lua->window.width, m_lua->window.height, m_lua->window.title.c_str());
 
     // Start postSetup
     m_lua->state = Lua::State::PostSetup;
@@ -51,9 +48,9 @@ void Application::run()
     {
         m_lua->update();
 
-        ClearBackground(m_lua->canvas->background);
+        ClearBackground(m_lua->canvas.background);
         BeginDrawing();
-        BeginMode3D(m_lua->canvas->camera);
+        BeginMode3D(m_lua->canvas.camera);
         m_lua->draw();
         EndMode3D();
         EndDrawing();
