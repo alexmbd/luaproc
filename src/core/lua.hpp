@@ -70,5 +70,5 @@ struct Lua
     void draw();
 };
 
-void setup(std::shared_ptr<Lua> luaptr);
+void setupScript(std::shared_ptr<Lua> luaptr, const std::string &filename);
 }

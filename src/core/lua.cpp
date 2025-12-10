@@ -521,7 +521,7 @@ void setupTransform(std::shared_ptr<Lua> luaptr)
 }
 
 // ---------- LUA ----------
-void setup(std::shared_ptr<Lua> luaptr)
+void setupScript(std::shared_ptr<Lua> luaptr, const std::string &filename)
 {
     sol::state &lua = luaptr->lua;
 
@@ -544,6 +544,29 @@ void setup(std::shared_ptr<Lua> luaptr)
     LightsCamera::setupLightsCamera(luaptr);
     Shape::setupShape(luaptr);
     TransformNS::setupTransform(luaptr);
+
+    lua.safe_script_file(filename, [](lua_State *L, sol::protected_function_result pfr) {
+        conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, pfr.get<std::string>());
+        return pfr;
+    });
+    sol::protected_function setupLua = lua["setup"];
+    if (!setupLua.valid()) { conditionalExit(MessageType::LUA_ERROR, Message::FUNC_NOT_FOUND, "setup"); }
+    setupLua();
+
+    if ((luaptr->window.width <= 0) || (luaptr->window.height <= 0))
+    {
+        conditionalExit(MessageType::LUA_ERROR, Message::GENERIC, "window size not valid must be greater than 0");
+    }
+    SetTargetFPS(luaptr->window.frameRate);
+    SetConfigFlags(luaptr->window.flags);
+    InitWindow(luaptr->window.width, luaptr->window.height, luaptr->window.title.c_str());
+
+    // Start postSetup
+    luaptr->state = Lua::State::PostSetup;
+    for (const auto &psFunc : luaptr->postSetupFuncs) { psFunc.function(psFunc.args); }
+
+    // Start draw
+    luaptr->state = Lua::State::Draw;
 }
 
 void Lua::update()

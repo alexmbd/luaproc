@@ -7,7 +7,7 @@ namespace LuaProc
 class Application
 {
   public:
-    Application();
+    Application(const std::string &filename);
     ~Application();
 
     void run();
