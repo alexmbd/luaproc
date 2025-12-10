@@ -11,6 +11,13 @@ set(LUAPROC_FILES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/app.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/core/lua.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/color.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/environment.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/lightscamera.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/math.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/output.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/shape.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/modules/transform.cpp
 )
 
 link_directories(
@@ -19,7 +26,13 @@ link_directories(
 )
 
 add_executable(${CMAKE_PROJECT_NAME} ${LUAPROC_FILES})
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE stdc++exp raylib winmm lua54)
+
+if (WIN32)
+    target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE stdc++exp raylib winmm lua54)
+else()
+    message("Other OS will be supported in the future!")
+endif()
+
 target_include_directories(${CMAKE_PROJECT_NAME}
     PRIVATE 
     ${CMAKE_CURRENT_SOURCE_DIR}/src

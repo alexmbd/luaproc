@@ -34,15 +34,17 @@ struct Canvas
         HSB
     };
 
-    Renderer renderer   = Canvas::Renderer::P2D;
-    ColorMode colorMode = Canvas::ColorMode::RGB;
-    Camera3D camera     = {0};
+    Renderer renderer    = Canvas::Renderer::P2D;
+    ColorMode colorMode  = Canvas::ColorMode::RGB;
+    Camera2D camera2D    = {0};
+    Camera3D camera3D    = {0};
 
-    Color background    = Color{128, 128, 128, 255};
-    Color fill          = Color{255, 255, 255, 255};
-    Color stroke        = Color{255, 255, 255, 255};
-    bool noFill         = false;
-    bool noStroke       = false;
+    Color background     = Color{128, 128, 128, 255};
+    Color fill           = Color{255, 255, 255, 255};
+    Color stroke         = Color{255, 255, 255, 255};
+    bool noFill          = false;
+    bool noStroke        = false;
+    bool needToPopMatrix = false;
 };
 
 struct Lua
