@@ -99,19 +99,27 @@ void setupColor(std::shared_ptr<Lua> luaptr)
 {
     sol::state &lua = luaptr->lua;
 
-    lua.new_usertype<Color>(
-        sol::constructors<Color(unsigned char), Color(unsigned char, unsigned char), Color(unsigned char, unsigned char, unsigned char),
-                          Color(unsigned char, unsigned char, unsigned char, unsigned char)>(),
-        "r", &Color::r, "g", &Color::g, "b", &Color::b, "a", &Color::a);
+    lua.new_usertype<Color>("Color",
+                            sol::constructors<Color(), Color(unsigned char), Color(unsigned char, unsigned char),
+                                              Color(unsigned char, unsigned char, unsigned char),
+                                              Color(unsigned char, unsigned char, unsigned char, unsigned char)>(),
+                            "r", &Color::r, "g", &Color::g, "b", &Color::b, "a", &Color::a);
 
     lua["RGB"]        = static_cast<int>(Canvas::ColorMode::RGB);
     lua["HSB"]        = static_cast<int>(Canvas::ColorMode::HSB);
 
     lua["background"] = [luaptr](sol::variadic_args va) {
-        // (gray)
-        // (gray, a)
-        // (r, g, b)
-        // (r, g, b, a)
+        // background(gray)
+        // background(colorObject)
+        // background(gray, a)
+        // background(r, g, b)
+        // background(r, g, b, a)
+
+        if ((va.size() == 1) && (va[0].is<Color>()))
+        {
+            luaptr->canvas.background = va[0].as<Color>();
+            return;
+        }
 
         if ((va.size() == 0) || (va.size() > 4))
         {
@@ -119,6 +127,20 @@ void setupColor(std::shared_ptr<Lua> luaptr)
         }
         checkColorArg("background", va, luaptr->canvas.colorMode);
         luaptr->canvas.background = parseColor(va, luaptr->canvas.colorMode);
+    };
+
+    lua["color"] = [luaptr](sol::variadic_args va) {
+        // color(gray)
+        // color(gray, a)
+        // color(r, g, b)
+        // color(r, g, b, a)
+
+        if ((va.size() == 0) || (va.size() > 4))
+        {
+            conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "color", "1 to 4", va.size());
+        }
+        checkColorArg("color", va, luaptr->canvas.colorMode);
+        return parseColor(va, luaptr->canvas.colorMode);
     };
 
     lua["colorMode"] = [luaptr](sol::variadic_args va) {
@@ -132,10 +154,17 @@ void setupColor(std::shared_ptr<Lua> luaptr)
     };
 
     lua["fill"] = [luaptr](sol::variadic_args va) {
-        // (gray)
-        // (gray, a)
-        // (r, g, b)
-        // (r, g, b, a)
+        // fill(gray)
+        // fill(colorObject)
+        // fill(gray, a)
+        // fill(r, g, b)
+        // fill(r, g, b, a)
+
+        if ((va.size() == 1) && (va[0].is<Color>()))
+        {
+            luaptr->canvas.fill = va[0].as<Color>();
+            return;
+        }
 
         if ((va.size() == 0) || (va.size() > 4))
         {
@@ -147,22 +176,38 @@ void setupColor(std::shared_ptr<Lua> luaptr)
     };
 
     lua["lerpColor"] = [luaptr](sol::variadic_args va) {
-        // TODO: Not yet implemented
         // lerpColor(colorObject)
+        // lerpColor(hexCode)
         checkArgSize("lerpColor", 3, va.size());
-        checkArgType("lerpColor", va, sol::type::number);
+        Color from;
+        if (va[0].is<Color>()) { from = va[0].as<Color>(); }
+        else
+        {
+            if (va[0].get_type() != sol::type::number)
+            {
+                conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "lerpColor", "number or Color");
+            }
+            unsigned int fromValue = va[0].as<unsigned int>();
+            unsigned char r        = (fromValue >> 16) & 0xFF;
+            unsigned char g        = (fromValue >> 8) & 0xFF;
+            unsigned char b        = (fromValue) & 0xFF;
+            from                   = parseColorMode(luaptr->canvas.colorMode, r, g, b, 255.0);
+        }
 
-        unsigned int fromValue = va[0].as<unsigned int>();
-        unsigned char r        = (fromValue >> 16) & 0xFF;
-        unsigned char g        = (fromValue >> 8) & 0xFF;
-        unsigned char b        = (fromValue) & 0xFF;
-        Color from             = parseColorMode(luaptr->canvas.colorMode, r, g, b, 255.0);
-
-        unsigned int toValue   = va[1].as<unsigned int>();
-        r                      = (toValue >> 16) & 0xFF;
-        g                      = (toValue >> 8) & 0xFF;
-        b                      = (toValue) & 0xFF;
-        Color to               = parseColorMode(luaptr->canvas.colorMode, r, g, b, 255.0);
+        Color to;
+        if (va[1].is<Color>()) { to = va[1].as<Color>(); }
+        else
+        {
+            if (va[1].get_type() != sol::type::number)
+            {
+                conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, "lerpColor", "number or Color");
+            }
+            unsigned int toValue = va[1].as<unsigned int>();
+            unsigned char r      = (toValue >> 16) & 0xFF;
+            unsigned char g      = (toValue >> 8) & 0xFF;
+            unsigned char b      = (toValue) & 0xFF;
+            to                   = parseColorMode(luaptr->canvas.colorMode, r, g, b, 255.0);
+        }
         return ColorLerp(from, to, va[2].as<float>());
     };
 
@@ -177,10 +222,17 @@ void setupColor(std::shared_ptr<Lua> luaptr)
     };
 
     lua["stroke"] = [luaptr](sol::variadic_args va) {
-        // (gray)
-        // (gray, a)
-        // (r, g, b)
-        // (r, g, b, a)
+        // stroke(gray)
+        // stroke(colorObject)
+        // stroke(gray, a)
+        // stroke(r, g, b)
+        // stroke(r, g, b, a)
+
+        if ((va.size() == 1) && (va[0].is<Color>()))
+        {
+            luaptr->canvas.stroke = va[0].as<Color>();
+            return;
+        }
 
         if ((va.size() == 0) || (va.size() > 4))
         {
