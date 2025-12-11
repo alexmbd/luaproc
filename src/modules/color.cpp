@@ -6,6 +6,23 @@ namespace LuaProc
 {
 namespace ColorNS
 {
+void checkColorBound(const std::string &name, const double value, Canvas::ColorMode colorMode)
+{
+    if (colorMode == Canvas::ColorMode::RGB)
+    {
+        if ((value >= 0) && (value <= 255)) { return; }
+        conditionalExit(
+            MessageType::LUA_ERROR, Message::GENERIC,
+            std::format("'{}' arguments can only be numbers from 0 to 255 in RGB mode (base 10) or in hexadecimal (base 16)", name));
+    }
+    else
+    {
+        if ((value >= 0) && (value <= 1)) { return; }
+        conditionalExit(MessageType::LUA_ERROR, Message::GENERIC,
+                        std::format("'{}' arguments can only be numbers from 0 to 1 in HSB mode", name));
+    }
+}
+
 void checkColorArg(const std::string &name, const sol::variadic_args &va, Canvas::ColorMode colorMode)
 {
     for (const sol::stack_proxy &arg : va)
@@ -14,31 +31,12 @@ void checkColorArg(const std::string &name, const sol::variadic_args &va, Canvas
         {
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_TYPE, name, solTypeToString(sol::type::number));
         }
-        if (colorMode == Canvas::ColorMode::RGB)
-        {
-            if (va.size() != 1)
-            {
-                if ((arg.as<double>() < 0) || (arg.as<double>() > 255))
-                {
-                    conditionalExit(
-                        MessageType::LUA_ERROR, Message::GENERIC,
-                        std::format("'{}' arguments can only be numbers from 0 to 255 in RGB mode (base 10) or in hexadecimal (base 16)",
-                                    name));
-                }
-            }
-        }
-        else
-        {
-            if ((arg.as<double>() < 0) || (arg.as<double>() > 1))
-            {
-                conditionalExit(MessageType::LUA_ERROR, Message::GENERIC,
-                                std::format("'{}' arguments can only be numbers from 0 to 1 in HSB mode", name));
-            }
-        }
+        if ((va.size() == 1) && (colorMode == Canvas::ColorMode::RGB)) { continue; }
+        checkColorBound(name, arg.as<double>(), colorMode);
     }
 }
 
-Color toColor(Canvas::ColorMode colorMode, double a, double b, double c, double alpha)
+Color parseColorMode(Canvas::ColorMode colorMode, double a, double b, double c, double alpha)
 {
     if (colorMode == Canvas::ColorMode::RGB)
     {
@@ -50,15 +48,15 @@ Color toColor(Canvas::ColorMode colorMode, double a, double b, double c, double 
     else
     {
         // HSB
-        // a -> [0, 255]
+        // a -> [0, 1] * 360
         // b, c -> [0, 1]
-        Color color = ColorFromHSV(a * 255, b, c);
+        Color color = ColorFromHSV(a * 360, b, c);
         color.a     = static_cast<unsigned char>(alpha * 255);
         return color;
     }
 }
 
-void setColor(const sol::variadic_args &va, Color &color, Canvas::ColorMode colorMode)
+Color parseColor(const sol::variadic_args &va, Canvas::ColorMode colorMode)
 {
     if (va.size() == 1)
     {
@@ -70,31 +68,31 @@ void setColor(const sol::variadic_args &va, Color &color, Canvas::ColorMode colo
             unsigned char r       = (hexValue >> 16) & 0xFF;
             unsigned char g       = (hexValue >> 8) & 0xFF;
             unsigned char b       = (hexValue) & 0xFF;
-            color                 = toColor(colorMode, r, g, b, 255.0);
+            return parseColorMode(colorMode, r, g, b, 255.0);
         }
         else
         {
             double value = colorMode == Canvas::ColorMode::HSB ? 0.0 : gray;
             double alpha = colorMode == Canvas::ColorMode::HSB ? 1.0 : 255.0;
-            color        = toColor(colorMode, value, value, gray, alpha);
+            return parseColorMode(colorMode, value, value, gray, alpha);
         }
     }
     else if (va.size() == 2)
     {
         auto gray    = va[0].as<double>();
         double value = colorMode == Canvas::ColorMode::HSB ? 0.0 : gray;
-        color        = toColor(colorMode, value, value, gray, va[1].as<double>());
+        return parseColorMode(colorMode, value, value, gray, va[1].as<double>());
     }
     else if (va.size() == 3)
     {
         double alpha = colorMode == Canvas::ColorMode::HSB ? 1.0 : 255.0;
-        color        = toColor(colorMode, va[0].as<double>(), va[1].as<double>(), va[2].as<double>(), alpha);
+        return parseColorMode(colorMode, va[0].as<double>(), va[1].as<double>(), va[2].as<double>(), alpha);
     }
     else
     {
-        color = toColor(colorMode, va[0].as<double>(), va[1].as<double>(), va[2].as<double>(), va[3].as<double>());
+        return parseColorMode(colorMode, va[0].as<double>(), va[1].as<double>(), va[2].as<double>(), va[3].as<double>());
     }
-}
+};
 
 // ---------- COLOR ----------
 void setupColor(std::shared_ptr<Lua> luaptr)
@@ -120,7 +118,7 @@ void setupColor(std::shared_ptr<Lua> luaptr)
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "background", "1 to 4", va.size());
         }
         checkColorArg("background", va, luaptr->canvas.colorMode);
-        setColor(va, luaptr->canvas.background, luaptr->canvas.colorMode);
+        luaptr->canvas.background = parseColor(va, luaptr->canvas.colorMode);
     };
 
     lua["colorMode"] = [luaptr](sol::variadic_args va) {
@@ -144,7 +142,7 @@ void setupColor(std::shared_ptr<Lua> luaptr)
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "fill", "1 to 4", va.size());
         }
         checkColorArg("fill", va, luaptr->canvas.colorMode);
-        setColor(va, luaptr->canvas.fill, luaptr->canvas.colorMode);
+        luaptr->canvas.fill   = parseColor(va, luaptr->canvas.colorMode);
         luaptr->canvas.noFill = false;
     };
 
@@ -158,13 +156,13 @@ void setupColor(std::shared_ptr<Lua> luaptr)
         unsigned char r        = (fromValue >> 16) & 0xFF;
         unsigned char g        = (fromValue >> 8) & 0xFF;
         unsigned char b        = (fromValue) & 0xFF;
-        Color from             = toColor(luaptr->canvas.colorMode, r, g, b, 255.0);
+        Color from             = parseColorMode(luaptr->canvas.colorMode, r, g, b, 255.0);
 
         unsigned int toValue   = va[1].as<unsigned int>();
         r                      = (toValue >> 16) & 0xFF;
         g                      = (toValue >> 8) & 0xFF;
         b                      = (toValue) & 0xFF;
-        Color to               = toColor(luaptr->canvas.colorMode, r, g, b, 255.0);
+        Color to               = parseColorMode(luaptr->canvas.colorMode, r, g, b, 255.0);
         return ColorLerp(from, to, va[2].as<float>());
     };
 
@@ -189,7 +187,7 @@ void setupColor(std::shared_ptr<Lua> luaptr)
             conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "stroke", "1 to 4", va.size());
         }
         checkColorArg("stroke", va, luaptr->canvas.colorMode);
-        setColor(va, luaptr->canvas.stroke, luaptr->canvas.colorMode);
+        luaptr->canvas.stroke   = parseColor(va, luaptr->canvas.colorMode);
         luaptr->canvas.noStroke = false;
     };
 }
