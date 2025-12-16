@@ -13,11 +13,12 @@ namespace LuaProc
 {
 struct Window
 {
-    int width         = -1;
-    int height        = -1;
-    int frameRate     = 60;
-    int flags         = 0;
-    std::string title = "LuaProc";
+    int width              = -1;
+    int height             = -1;
+    int frameRate          = 60;
+    int flags              = 0;
+    std::size_t frameCount = 0;
+    std::string title      = "LuaProc";
 };
 
 struct Canvas
@@ -38,10 +39,11 @@ struct Canvas
     ColorMode colorMode  = Canvas::ColorMode::RGB;
     Camera2D camera2D    = {0};
     Camera3D camera3D    = {0};
+    float zOrder         = 0.0f; // Used for 2D drawing in a Camera3D context
 
     Color background     = Color{128, 128, 128, 255};
     Color fill           = Color{255, 255, 255, 255};
-    Color stroke         = Color{255, 255, 255, 255};
+    Color stroke         = Color{0, 0, 0, 255};
     bool noFill          = false;
     bool noStroke        = false;
     bool needToPopMatrix = false;

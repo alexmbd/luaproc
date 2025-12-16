@@ -69,6 +69,8 @@ void Lua::draw()
 {
     sol::protected_function drawLua = lua["draw"];
     if (!drawLua.valid()) { conditionalExit(MessageType::LUA_ERROR, Message::FUNC_NOT_FOUND, "draw"); }
+    window.frameCount++;
+    canvas.zOrder = 0.0f; // Need to reset every draw call
     drawLua();
 }
 }

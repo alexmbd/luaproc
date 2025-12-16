@@ -1,4 +1,5 @@
 #include "environment.hpp"
+#include "core/constants.hpp"
 #include "core/lua.hpp"
 #include "core/msghandler.hpp"
 
@@ -46,6 +47,7 @@ void noCursor(const std::vector<sol::object> &va)
 // windowMoved, windowRatio, windowResized
 
 // ENVIRONMENT (API changes)
+// frameCount changed from a variable to a function
 // frameRate variable and function merged
 
 void setupEnvironment(std::shared_ptr<Lua> luaptr)
@@ -96,6 +98,11 @@ void setupEnvironment(std::shared_ptr<Lua> luaptr)
         luaptr->window.flags |= FLAG_FULLSCREEN_MODE;
     };
 
+    lua["frameCount"] = [luaptr](sol::variadic_args va) {
+        checkArgSize("frameCount", 0, va.size());
+        return luaptr->window.frameCount;
+    };
+
     lua["frameRate"] = [luaptr](sol::variadic_args va) {
         if (va.size() > 1) { conditionalExit(MessageType::LUA_ERROR, Message::UNEXPECTED_ARG_COUNT, "frameRate", "0 to 1", va.size()); }
         if (va.size() == 0) { return luaptr->window.frameRate; }
@@ -132,12 +139,14 @@ void setupEnvironment(std::shared_ptr<Lua> luaptr)
         if (luaptr->canvas.renderer == Canvas::Renderer::P2D) { luaptr->canvas.camera2D.zoom = 1.0f; }
         else if (luaptr->canvas.renderer == Canvas::Renderer::P3D)
         {
-            luaptr->canvas.camera3D.position   = Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f, -1.0f};
+            luaptr->canvas.camera3D.fovy = static_cast<float>(luaptr->window.height);
+            luaptr->canvas.camera3D.position =
+                Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f,
+                        -(luaptr->window.height / 2.0f) / static_cast<float>(std::tan(luaptr->canvas.camera3D.fovy * Math::PI_ / 360.0f))};
             luaptr->canvas.camera3D.target     = Vector3{luaptr->window.width / 2.0f, luaptr->window.height / 2.0f, 0.0f};
-            luaptr->canvas.camera3D.up         = Vector3{0.0f, -1.0f, 0.0f};
-            luaptr->canvas.camera3D.fovy       = static_cast<float>(luaptr->window.height);
+            luaptr->canvas.camera3D.up         = Vector3{0.0f, 1.0f, 0.0f};
             luaptr->canvas.camera3D.projection = CAMERA_PERSPECTIVE;
-            rlSetClipPlanes(-1000, 1000);
+            rlSetClipPlanes(-luaptr->canvas.camera3D.position.z / 10.0f, -luaptr->canvas.camera3D.position.z * 10.0f);
         }
     };
 
