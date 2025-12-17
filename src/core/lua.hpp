@@ -35,18 +35,23 @@ struct Canvas
         HSB
     };
 
-    Renderer renderer    = Canvas::Renderer::P2D;
-    ColorMode colorMode  = Canvas::ColorMode::RGB;
-    Camera2D camera2D    = {0};
-    Camera3D camera3D    = {0};
-    float zOrder         = 0.0f; // Used for 2D drawing in a Camera3D context
+    enum class Projection
+    {
+        PERSPECTIVE,
+        ORTHOGRAPHIC
+    };
 
-    Color background     = Color{128, 128, 128, 255};
-    Color fill           = Color{255, 255, 255, 255};
-    Color stroke         = Color{0, 0, 0, 255};
-    bool noFill          = false;
-    bool noStroke        = false;
-    bool needToPopMatrix = false;
+    Renderer renderer     = Renderer::P2D;
+    ColorMode colorMode   = ColorMode::RGB;
+    Projection projection = Projection::PERSPECTIVE;
+    float zOrder          = 0.0f; // Used for 2D drawing in a 3D context
+
+    Color background      = Color{128, 128, 128, 255};
+    Color fill            = Color{255, 255, 255, 255};
+    Color stroke          = Color{0, 0, 0, 255};
+    bool noFill           = false;
+    bool noStroke         = false;
+    bool needToPopMatrix  = false;
 };
 
 struct Lua
